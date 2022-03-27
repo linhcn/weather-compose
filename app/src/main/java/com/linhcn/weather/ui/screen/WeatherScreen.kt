@@ -1,15 +1,22 @@
 package com.linhcn.weather.ui.screen
 
-import android.text.style.StyleSpan
+import androidx.compose.animation.*
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Snackbar
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -20,6 +27,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -30,7 +39,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.linhcn.weather.R
 import com.linhcn.weather.common.IndicatorScreen
 import com.linhcn.weather.data.local.entities.Weather
@@ -40,15 +52,15 @@ import com.linhcn.weather.ui.theme.Blue200
 import com.linhcn.weather.ui.theme.Blue700
 import com.linhcn.weather.ui.theme.Blue900
 import com.linhcn.weather.ui.theme.WeatherTheme
-import com.linhcn.weather.utils.getLetterDateOfWeek
-import com.linhcn.weather.utils.getListDateOfWeek
-import com.linhcn.weather.utils.getShortName
-import com.linhcn.weather.utils.isToday
+import com.linhcn.weather.utils.*
 import java.util.*
 
 @Composable
-fun WeatherScreen(viewModel: WeatherViewModel) {
-    Row {
+fun WeatherScreen(navController: NavHostController, viewModel: WeatherViewModel = hiltViewModel()) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = CenterHorizontally
+    ) {
         DateInWeeks(list = viewModel.dateInWeeksState, onClick = {
             viewModel.onAction(WeatherAction.SelectedDate(it))
         })
@@ -59,19 +71,37 @@ fun WeatherScreen(viewModel: WeatherViewModel) {
 @Composable
 fun WeatherContent(weatherState: WeatherState) {
     IndicatorScreen(isLoading = weatherState.isLoading) {
+        var offset by remember {
+            mutableStateOf(0f)
+        }
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .scrollable(
+                    orientation = Orientation.Vertical,
+                    state = rememberScrollableState { delta ->
+                        offset += delta
+                        delta
+                    }
+                ),
             horizontalAlignment = CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             if (weatherState.isLoadingSuccess) {
+                // TODO: update UI to swipe refresh
+//                Text(text = offset.toString())
+
                 val weather = weatherState.weather!!
+
                 AsyncImage(
-                    model = weather.getWeatherIconUrl(),
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(weather.getWeatherIconUrl())
+                        .crossfade(400)
+                        .build(),
                     contentDescription = "Weather Image",
                     modifier = Modifier
-                        .background(Color.Blue)
-                        .size(200.dp)
+                        .size(150.dp)
+                        .padding(20.dp),
                 )
                 val temp = weather.theTemp?.toInt()?.toString() ?: "0"
                 Text(
@@ -85,7 +115,12 @@ fun WeatherContent(weatherState: WeatherState) {
                 )
                 Text(
                     text = weather.stateName ?: "",
-                    style = TextStyle(color = Blue200, fontSize = 70.sp)
+                    style = TextStyle(color = Blue200, fontSize = 30.sp)
+                )
+                Text(
+                    text = weather.applicableDate?.getName() ?: "",
+                    style = TextStyle(fontSize = 18.sp),
+                    modifier = Modifier.padding(20.dp)
                 )
                 Row {
                     WeatherPercent(
@@ -102,11 +137,21 @@ fun WeatherContent(weatherState: WeatherState) {
                     )
                 }
             } else {
-                val error = weatherState.error!!
-                Text(
-                    color = Color.Black,
-                    text = if (error.isEmptyData()) stringResource(id = R.string.no_data) else error.message,
-                )
+                val error = weatherState.error
+                if (error.isEmptyData()) {
+                    Text(
+                        color = Color.Black,
+                        text = stringResource(id = R.string.no_data),
+                    )
+                } else {
+                    Snackbar(modifier = Modifier.padding(8.dp)) {
+                        Text(
+                            color = Color.Black,
+                            text = error.message,
+                        )
+                    }
+                }
+
             }
         }
     }
@@ -130,7 +175,7 @@ fun WeatherPercent(
             horizontalAlignment = CenterHorizontally,
             modifier = Modifier.padding(15.dp)
         ) {
-            val humidity = percentValue.div(100).toFloat()
+            val humidity = percentValue.toFloat() / 100F
             PercentProcessBar(
                 initialValue = humidity,
                 inactiveBarColor = Color.LightGray,
@@ -229,21 +274,26 @@ fun WeatherPercentPreview() {
 }
 
 @Composable
-fun DateInWeek(state: DateInWeekState, onClick: (state: DateInWeekState) -> Unit) {
+fun DateInWeek(
+    state: DateInWeekState,
+    modifier: Modifier,
+    onClick: (state: DateInWeekState) -> Unit
+) {
     Column(
-        modifier = Modifier
+        modifier = modifier
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(Blue700, if (state.isSelected) Blue200 else Blue700)
                 )
             )
             .clickable {
-                onClick(state)
+                onClick(state.apply { isSelected = true })
             }
             .padding(top = 5.dp, start = 5.dp, end = 5.dp, bottom = 10.dp),
         horizontalAlignment = CenterHorizontally,
     ) {
         Text(text = state.date.getLetterDateOfWeek(), color = Color.White)
+        Spacer(modifier = Modifier.height(5.dp))
         Text(text = state.date.getShortName(), color = Color.White)
     }
 
@@ -251,9 +301,13 @@ fun DateInWeek(state: DateInWeekState, onClick: (state: DateInWeekState) -> Unit
 
 @Composable
 fun DateInWeeks(list: List<DateInWeekState>, onClick: (state: DateInWeekState) -> Unit) {
-    Row() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Blue700),
+    ) {
         for (i in list) {
-            DateInWeek(state = i, onClick)
+            DateInWeek(state = i, modifier = Modifier.weight(1f), onClick)
         }
     }
 }
@@ -264,7 +318,7 @@ fun DateInWeekPreview() {
     WeatherTheme {
         val dateInWeeksState = remember {
             mutableStateListOf<DateInWeekState>().apply {
-                val dateInWeeks = Calendar.getInstance().getListDateOfWeek(0).sorted()
+                val dateInWeeks = Calendar.getInstance().getListDateOfWeek(0)
                 for (d in dateInWeeks) {
                     add(DateInWeekState(d, d.isToday()))
                 }

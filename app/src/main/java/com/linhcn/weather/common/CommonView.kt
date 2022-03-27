@@ -22,7 +22,6 @@ fun IndicatorScreen(
     content: @Composable () -> Unit
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        content()
         if (isLoading) {
             Box(modifier = Modifier.fillMaxSize()) {
                 Column(
@@ -39,6 +38,8 @@ fun IndicatorScreen(
                     }
                 }
             }
+        } else {
+            content()
         }
     }
 }

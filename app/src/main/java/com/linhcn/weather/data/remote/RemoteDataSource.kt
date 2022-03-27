@@ -3,6 +3,7 @@ package com.linhcn.weather.data.remote
 import com.linhcn.weather.data.local.entities.Weather
 import com.linhcn.weather.models.Result
 import com.linhcn.weather.models.Error
+import com.linhcn.weather.utils.getName
 import retrofit2.Response
 import java.util.*
 import javax.inject.Inject
@@ -14,7 +15,7 @@ abstract class BaseRemoteDataSource {
         try {
             response = call.invoke()
         } catch (t: Throwable) {
-            return t.toResult()
+            return toResult()
         }
 
         // convert response to our custom Result
@@ -25,9 +26,21 @@ abstract class BaseRemoteDataSource {
             Result.Failure(Error.unknownError())
         }
     }
+
+    protected suspend fun <E : Any, T : E> apiCall1(call: suspend () -> E): Result<E> {
+        // invoke a call
+        val response: E
+        try {
+            response = call.invoke()
+        } catch (t: Throwable) {
+            t.printStackTrace()
+            return toResult()
+        }
+        return Result.Success(response)
+    }
 }
 
-fun <T : Any> Throwable.toResult(): Result<T> {
+fun <T : Any> toResult(): Result<T> {
     return Result.Failure(Error.unknownError())
 }
 
@@ -39,13 +52,12 @@ class RemoteDataSourceImpl @Inject constructor(private val apiClient: ApiClient)
     BaseRemoteDataSource() {
 
     override suspend fun getWeathersOnDate(date: Date): Result<List<Weather>> {
-        return apiCall {
-            val c = Calendar.getInstance().apply {
-                time = date
-            }
+        return apiCall1 {
+            val c = Calendar.getInstance()
+            c.time = date
             apiClient.getWeathersOnDate(
                 c.get(Calendar.YEAR),
-                c.get(Calendar.MONTH),
+                c.get(Calendar.MONTH) + 1,
                 c.get(Calendar.DAY_OF_MONTH)
             )
         }
