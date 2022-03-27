@@ -1,14 +1,22 @@
 package com.linhcn.weather.ui.screen
 
+import androidx.compose.animation.*
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Snackbar
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -20,6 +28,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -62,22 +71,37 @@ fun WeatherScreen(navController: NavHostController, viewModel: WeatherViewModel 
 @Composable
 fun WeatherContent(weatherState: WeatherState) {
     IndicatorScreen(isLoading = weatherState.isLoading) {
+        var offset by remember {
+            mutableStateOf(0f)
+        }
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .scrollable(
+                    orientation = Orientation.Vertical,
+                    state = rememberScrollableState { delta ->
+                        offset += delta
+                        delta
+                    }
+                ),
             horizontalAlignment = CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
         ) {
             if (weatherState.isLoadingSuccess) {
+                // TODO: update UI to swipe refresh
+//                Text(text = offset.toString())
+
                 val weather = weatherState.weather!!
+
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(weather.getWeatherIconUrl())
-                        .crossfade(true)
+                        .crossfade(400)
                         .build(),
                     contentDescription = "Weather Image",
                     modifier = Modifier
                         .size(150.dp)
-                        .padding(20.dp)
+                        .padding(20.dp),
                 )
                 val temp = weather.theTemp?.toInt()?.toString() ?: "0"
                 Text(
@@ -114,10 +138,20 @@ fun WeatherContent(weatherState: WeatherState) {
                 }
             } else {
                 val error = weatherState.error
-                Text(
-                    color = Color.Black,
-                    text = if (error.isEmptyData()) stringResource(id = R.string.no_data) else error.message,
-                )
+                if (error.isEmptyData()) {
+                    Text(
+                        color = Color.Black,
+                        text = stringResource(id = R.string.no_data),
+                    )
+                } else {
+                    Snackbar(modifier = Modifier.padding(8.dp)) {
+                        Text(
+                            color = Color.Black,
+                            text = error.message,
+                        )
+                    }
+                }
+
             }
         }
     }
@@ -259,6 +293,7 @@ fun DateInWeek(
         horizontalAlignment = CenterHorizontally,
     ) {
         Text(text = state.date.getLetterDateOfWeek(), color = Color.White)
+        Spacer(modifier = Modifier.height(5.dp))
         Text(text = state.date.getShortName(), color = Color.White)
     }
 
