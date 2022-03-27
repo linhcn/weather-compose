@@ -26,8 +26,28 @@ class WeatherViewModel @Inject constructor(private val repo: WeatherRepository) 
             add(DateInWeekState(d, d.isToday()))
         }
     }
+
     var state by mutableStateOf(WeatherState())
         private set
+
+    init {
+        viewModelScope.launch {
+            handleActions()
+            onAction(WeatherAction.SelectedDate(getSelectedState()))
+        }
+    }
+
+    fun getSelectedState(): DateInWeekState {
+        var selectedState: DateInWeekState? = null
+        for (item in dateInWeeksState) {
+            if (item.isSelected) {
+                selectedState = item
+            } else if (selectedState == null && item.date.isToday()) {
+                selectedState = item
+            }
+        }
+        return selectedState ?: dateInWeeksState[0]
+    }
 
     fun onAction(action: WeatherAction) {
         viewModelScope.launch {
@@ -45,8 +65,11 @@ class WeatherViewModel @Inject constructor(private val repo: WeatherRepository) 
                     // update UI for selected date
                     val selectedIndex = dateInWeeksState.indexOf(ac.state)
                     for (item in dateInWeeksState) {
-                        item.isSelected =
-                            !(item != dateInWeeksState[selectedIndex] && item.isSelected)
+                        if (item != dateInWeeksState[selectedIndex]) {
+                            if (item.isSelected) {
+                                item.isSelected = false
+                            }
+                        }
                     }
 
                     // get weathers data on selected date
@@ -76,7 +99,7 @@ class WeatherViewModel @Inject constructor(private val repo: WeatherRepository) 
 
 data class WeatherState(
     var weather: Weather? = null,
-    var error: Error? = null,
+    var error: Error = Error.unknownError(),
     var isLoading: Boolean = false,
     var isLoadingSuccess: Boolean = false,
 )

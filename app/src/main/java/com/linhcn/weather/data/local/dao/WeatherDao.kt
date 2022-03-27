@@ -16,7 +16,7 @@ interface WeatherDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWeather(weather: Weather)
 
-    @Insert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertWeathers(weathers: List<Weather>)
 
 }

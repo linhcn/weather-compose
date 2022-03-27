@@ -14,7 +14,7 @@ abstract class BaseRemoteDataSource {
         try {
             response = call.invoke()
         } catch (t: Throwable) {
-            return t.toResult()
+            return toResult()
         }
 
         // convert response to our custom Result
@@ -25,9 +25,21 @@ abstract class BaseRemoteDataSource {
             Result.Failure(Error.unknownError())
         }
     }
+
+    protected suspend fun <E : Any, T : E> apiCall1(call: suspend () -> E): Result<E> {
+        // invoke a call
+        val response: E
+        try {
+            response = call.invoke()
+        } catch (t: Throwable) {
+            t.printStackTrace()
+            return toResult()
+        }
+        return Result.Success(response)
+    }
 }
 
-fun <T : Any> Throwable.toResult(): Result<T> {
+fun <T : Any> toResult(): Result<T> {
     return Result.Failure(Error.unknownError())
 }
 
@@ -39,7 +51,7 @@ class RemoteDataSourceImpl @Inject constructor(private val apiClient: ApiClient)
     BaseRemoteDataSource() {
 
     override suspend fun getWeathersOnDate(date: Date): Result<List<Weather>> {
-        return apiCall {
+        return apiCall1 {
             val c = Calendar.getInstance().apply {
                 time = date
             }
