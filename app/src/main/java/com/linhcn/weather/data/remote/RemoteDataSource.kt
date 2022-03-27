@@ -3,6 +3,7 @@ package com.linhcn.weather.data.remote
 import com.linhcn.weather.data.local.entities.Weather
 import com.linhcn.weather.models.Result
 import com.linhcn.weather.models.Error
+import com.linhcn.weather.utils.getName
 import retrofit2.Response
 import java.util.*
 import javax.inject.Inject
@@ -52,12 +53,11 @@ class RemoteDataSourceImpl @Inject constructor(private val apiClient: ApiClient)
 
     override suspend fun getWeathersOnDate(date: Date): Result<List<Weather>> {
         return apiCall1 {
-            val c = Calendar.getInstance().apply {
-                time = date
-            }
+            val c = Calendar.getInstance()
+            c.time = date
             apiClient.getWeathersOnDate(
                 c.get(Calendar.YEAR),
-                c.get(Calendar.MONTH),
+                c.get(Calendar.MONTH) + 1,
                 c.get(Calendar.DAY_OF_MONTH)
             )
         }

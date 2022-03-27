@@ -19,6 +19,11 @@ fun Date.isToday(): Boolean {
     return sdf.format(this) == sdf.format(Date())
 }
 
+fun Date.getName(): String {
+    val sdf = SimpleDateFormat("EEE MMM dd, yyyy", Locale.getDefault())
+    return sdf.format(this)
+}
+
 fun Date.getShortName(): String {
     val sdf = SimpleDateFormat("M/d", Locale.getDefault())
     return sdf.format(this)
@@ -44,11 +49,12 @@ fun Calendar.getListDateOfWeek(offsetWeek: Int): List<Date> {
     for (i in 0..6) {
         set(Calendar.DAY_OF_WEEK, i)
         listDateOfWeek.add(time)
-        println(time)
     }
-    return listDateOfWeek
+    return listDateOfWeek.sorted().sortedBy {
+        !it.isToday()
+    }
 }
 
 fun main() {
-    Calendar.getInstance().getListDateOfWeek(0)
+    Calendar.getInstance().getListDateOfWeek(1)
 }

@@ -43,11 +43,7 @@ import com.linhcn.weather.ui.theme.Blue200
 import com.linhcn.weather.ui.theme.Blue700
 import com.linhcn.weather.ui.theme.Blue900
 import com.linhcn.weather.ui.theme.WeatherTheme
-import com.linhcn.weather.utils.getLetterDateOfWeek
-import com.linhcn.weather.utils.getListDateOfWeek
-import com.linhcn.weather.utils.getShortName
-import com.linhcn.weather.utils.isToday
-import java.net.URL
+import com.linhcn.weather.utils.*
 import java.util.*
 
 @Composable
@@ -80,7 +76,8 @@ fun WeatherContent(weatherState: WeatherState) {
                         .build(),
                     contentDescription = "Weather Image",
                     modifier = Modifier
-                        .size(200.dp)
+                        .size(150.dp)
+                        .padding(20.dp)
                 )
                 val temp = weather.theTemp?.toInt()?.toString() ?: "0"
                 Text(
@@ -94,7 +91,12 @@ fun WeatherContent(weatherState: WeatherState) {
                 )
                 Text(
                     text = weather.stateName ?: "",
-                    style = TextStyle(color = Blue200, fontSize = 70.sp)
+                    style = TextStyle(color = Blue200, fontSize = 30.sp)
+                )
+                Text(
+                    text = weather.applicableDate?.getName() ?: "",
+                    style = TextStyle(fontSize = 18.sp),
+                    modifier = Modifier.padding(20.dp)
                 )
                 Row {
                     WeatherPercent(
@@ -281,7 +283,7 @@ fun DateInWeekPreview() {
     WeatherTheme {
         val dateInWeeksState = remember {
             mutableStateListOf<DateInWeekState>().apply {
-                val dateInWeeks = Calendar.getInstance().getListDateOfWeek(0).sorted()
+                val dateInWeeks = Calendar.getInstance().getListDateOfWeek(0)
                 for (d in dateInWeeks) {
                     add(DateInWeekState(d, d.isToday()))
                 }

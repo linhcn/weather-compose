@@ -33,11 +33,11 @@ class WeatherViewModel @Inject constructor(private val repo: WeatherRepository) 
     init {
         viewModelScope.launch {
             handleActions()
-            onAction(WeatherAction.SelectedDate(getSelectedState()))
         }
+        onAction(WeatherAction.SelectedDate(getSelectedState()))
     }
 
-    fun getSelectedState(): DateInWeekState {
+    private fun getSelectedState(): DateInWeekState {
         var selectedState: DateInWeekState? = null
         for (item in dateInWeeksState) {
             if (item.isSelected) {
