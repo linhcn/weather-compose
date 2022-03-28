@@ -13,7 +13,7 @@ interface LocalDataSource {
 class LocalDataSourceImpl @Inject constructor(private val weatherDb: WeatherDatabase) :
     LocalDataSource {
     override suspend fun getWeathersOnDate(date: Date): List<Weather> {
-        return weatherDb.weatherDao().getWeatherOnDate(date)
+        return weatherDb.weatherDao().getWeatherOnDate(date).toList()
     }
 
     override suspend fun insertWeathers(weathers: List<Weather>) {

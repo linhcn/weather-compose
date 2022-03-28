@@ -105,7 +105,9 @@ data class WeatherState(
 )
 
 data class DateInWeekState(
-    var date: Date = Date(),
+    var date: Date = Date().apply {
+        time = (time / 10000L) * 10000L
+    },
     var isSelected: Boolean = false
 )
 
