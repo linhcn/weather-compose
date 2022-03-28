@@ -146,7 +146,7 @@ fun WeatherContent(weatherState: WeatherState) {
                 } else {
                     Snackbar(modifier = Modifier.padding(8.dp)) {
                         Text(
-                            color = Color.Black,
+                            color = Color.White,
                             text = error.message,
                         )
                     }
