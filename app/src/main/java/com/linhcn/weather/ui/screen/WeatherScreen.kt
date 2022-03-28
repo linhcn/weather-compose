@@ -46,6 +46,7 @@ import coil.request.ImageRequest
 import com.linhcn.weather.R
 import com.linhcn.weather.common.IndicatorScreen
 import com.linhcn.weather.data.local.entities.Weather
+import com.linhcn.weather.data.local.entities.getApplicableDate
 import com.linhcn.weather.data.local.entities.getWeatherIconUrl
 import com.linhcn.weather.models.isEmptyData
 import com.linhcn.weather.ui.theme.Blue200
@@ -118,7 +119,7 @@ fun WeatherContent(weatherState: WeatherState) {
                     style = TextStyle(color = Blue200, fontSize = 30.sp)
                 )
                 Text(
-                    text = weather.applicableDate?.getName() ?: "",
+                    text = weather.getApplicableDate()?.getName() ?: "",
                     style = TextStyle(fontSize = 18.sp),
                     modifier = Modifier.padding(20.dp)
                 )

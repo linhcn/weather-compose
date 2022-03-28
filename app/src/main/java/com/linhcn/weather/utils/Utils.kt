@@ -1,9 +1,20 @@
 package com.linhcn.weather.utils
 
+import android.annotation.SuppressLint
 import java.text.DateFormat
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.math.abs
+
+@SuppressLint("SimpleDateFormat")
+fun Date.getApplicableDate(): String? {
+    return try {
+        SimpleDateFormat(Constant.APPLICABLE_DATE_FORMAT).format(this)
+    } catch (ex: ParseException) {
+        null
+    }
+}
 
 fun Date.getLetterDateOfWeek(): String {
     val locale = Locale.getDefault()

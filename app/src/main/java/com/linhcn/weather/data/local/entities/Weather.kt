@@ -1,10 +1,13 @@
 package com.linhcn.weather.data.local.entities
 
+import android.annotation.SuppressLint
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
 import com.linhcn.weather.BuildConfig
+import com.linhcn.weather.utils.Constant
+import java.text.SimpleDateFormat
 import java.util.*
 
 @Entity
@@ -25,7 +28,7 @@ data class Weather(
     val created: Date? = null,
     @ColumnInfo(name = "applicable_date")
     @SerializedName("applicable_date")
-    val applicableDate: Date? = null,
+    val applicableDate: String? = null,
     @ColumnInfo(name = "min_temp")
     @SerializedName("min_temp")
     val minTemp: Float? = null,
@@ -55,15 +58,20 @@ data class Weather(
     val predictability: Int? = null
 )
 
+@SuppressLint("SimpleDateFormat")
+fun Weather.getApplicableDate(): Date? {
+    return applicableDate?.let { SimpleDateFormat(Constant.APPLICABLE_DATE_FORMAT).parse(applicableDate) }
+}
 
 fun List<Weather>.getWeatherSuitableTime(): Weather {
     val now = Date()
     var min = this[0]
     this.forEach { weather ->
-        if (weather.applicableDate == null)
+        if (weather.getApplicableDate() == null)
             return@forEach
-        val compared = weather.applicableDate.time / now.time
-        min.applicableDate?.let {
+
+        val compared = weather.getApplicableDate()!!.time / now.time
+        weather.getApplicableDate()!!.let {
             if (compared < (it.time / now.time)) {
                 min = weather
             }

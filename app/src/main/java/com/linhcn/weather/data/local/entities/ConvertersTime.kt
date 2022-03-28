@@ -3,9 +3,10 @@ package com.linhcn.weather.data.local.entities
 import androidx.room.TypeConverter
 import java.util.*
 
-class Converters {
+class ConvertersTime {
+
     @TypeConverter
-    fun fromTimestamp(value: Long?) : Date? {
+    fun fromTimestamp(value: Long?): Date? {
         return value?.let { Date(it) }
     }
 
