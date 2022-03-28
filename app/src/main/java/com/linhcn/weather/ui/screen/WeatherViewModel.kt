@@ -11,6 +11,7 @@ import com.linhcn.weather.utils.getListDateOfWeek
 import com.linhcn.weather.utils.isToday
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -73,21 +74,22 @@ class WeatherViewModel @Inject constructor(private val repo: WeatherRepository) 
                     }
 
                     // get weathers data on selected date
-                    val res = repo.getWeathersOnDate(ac.state.date)
-                    state = when (res) {
-                        is Result.Success -> {
-                            state.copy(
-                                weather = res.data!!.getWeatherSuitableTime(),
-                                isLoadingSuccess = true,
-                                isLoading = false
-                            )
-                        }
-                        is Result.Failure -> {
-                            state.copy(
-                                error = res.error,
-                                isLoadingSuccess = false,
-                                isLoading = false
-                            )
+                    repo.getWeathersOnDate(ac.state.date).collect { res ->
+                        state = when (res) {
+                            is Result.Success -> {
+                                state.copy(
+                                    weather = res.data!!.getWeatherSuitableTime(),
+                                    isLoadingSuccess = true,
+                                    isLoading = false
+                                )
+                            }
+                            is Result.Failure -> {
+                                state.copy(
+                                    error = res.error,
+                                    isLoadingSuccess = false,
+                                    isLoading = false
+                                )
+                            }
                         }
                     }
                 }
